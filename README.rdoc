@@ -1,9 +1,9 @@
-= OAuth2::Provider
+= Songkick::OAuth2::Provider
 
 {<img src="https://secure.travis-ci.org/songkick/oauth2-provider.png?branch=master" alt="Build Status" />}[http://travis-ci.org/songkick/oauth2-provider]
 {<img src="https://codeclimate.com/badge.png" />}[https://codeclimate.com/github/songkick/oauth2-provider]
 
-This gem provides a toolkit for adding OAuth2 provider capabilities to a Ruby
+This gem provides a toolkit for adding OAuth 2.0 provider capabilities to a Ruby
 web app. It handles most of the protocol for you: it is designed to provide
 a sufficient level of abstraction that it can implement updates to the protocol
 without affecting your application code at all. All you have to deal with is
@@ -52,13 +52,13 @@ need to provide four things:
 
 If you are using Bundler, put this in your Gemfile:
 
-  gem 'oauth2-provider', :require => 'oauth2/provider',
+  gem 'songkick-oauth2-provider', :require => 'songkick/oauth2/provider',
     :git => 'git://github.com/songkick/oauth2-provider'
 
 If you are not using Bundler, put the library in your load path and
 require it:
 
-  require 'oauth2/provider'
+  require 'songkick/oauth2/provider'
 
 
 ===  Declare your app's name
@@ -73,18 +73,19 @@ or an initializer):
 
 Your application should ensure that any endpoint that receives or returns OAuth
 data is only accessible over a secure transport such as the <tt>https:</tt>
-protocol. <tt>OAuth2::Provider</tt> can enforces this to make it easier to keep
-your users' data secure.
+protocol. <tt>Songkick::OAuth2::Provider</tt> can enforces this to make it
+easier to keep your users' data secure.
 
-You can set <tt>OAuth2::Provider.enforce_ssl = true</tt> in the same place that
-you declared your app name above. This will result in the following behavior:
+You can set <tt>Songkick::OAuth2::Provider.enforce_ssl = true</tt> in the same
+place that you declared your app name above. This will result in the following
+behavior:
 
-* The <tt>OAuth2::Provider.parse</tt> method will produce error responses and
-  will not process the incoming request unless the request was made using the
-  <tt>https:</tt> protocol.
-* An access token constructed using <tt>OAuth2::Provider.access_token</tt> will
-  return <tt>false</tt> for <tt>#valid?</tt> unless the request was made using the
-  <tt>https:</tt> protocol.
+* The <tt>Songkick::OAuth2::Provider.parse</tt> method will produce error
+  responses and will not process the incoming request unless the request was
+  made using the <tt>https:</tt> protocol.
+* An access token constructed using <tt>Songkick::OAuth2::Provider.access_token</tt>
+  will return <tt>false</tt> for <tt>#valid?</tt> unless the request was made
+  using the <tt>https:</tt> protocol.
 * Any access token received over an insecure connection is immediately destroyed
   to prevent eavesdroppers getting access to the user's resources. A client
   making an insecure request will have to send the user through the authorization
@@ -93,64 +94,64 @@ you declared your app name above. This will result in the following behavior:
 
 === Schema
 
-Add the <tt>OAuth2::Provider</tt> tables to your app's schema. This is done
-using <tt>OAuth2::Model::Schema.up</tt>, which can be used inside an
-<tt>ActiveRecord</tt> migration like so:
+Add the <tt>Songkick::OAuth2::Provider</tt> tables to your app's schema. This is
+done using <tt>Songkick::OAuth2::Model::Schema.up</tt>, which can be used inside
+an <tt>ActiveRecord</tt> migration like so:
 
   class CreateOauth2ProviderModels < ActiveRecord::Migration
     def up
-      OAuth2::Model::Schema.up
+      Songkick::OAuth2::Model::Schema.up
     end
 
     def down
-      OAuth2::Model::Schema.down
+      Songkick::OAuth2::Model::Schema.down
     end
   end
 
 
 === Model Mixins
 
-There are two mixins you need to put in your code, <tt>OAuth2::Model::ClientOwner</tt>
-for whichever model will own the "apps", and <tt>OAuth2::Model::ResourceOwner</tt>
+There are two mixins you need to put in your code, <tt>Songkick::OAuth2::Model::ClientOwner</tt>
+for whichever model will own the "apps", and <tt>Songkick::OAuth2::Model::ResourceOwner</tt>
 for whichever model is the innocent, unassuming entity who will selectively
 share their data. It's possible that this is the same model, such as User:
 
   class User < ActiveRecord::Base
-    include OAuth2::Model::ResourceOwner
-    include OAuth2::Model::ClientOwner
+    include Songkick::OAuth2::Model::ResourceOwner
+    include Songkick::OAuth2::Model::ClientOwner
     has_many :interesting_pieces_of_data
   end
 
 Or they might go into two different models:
 
   class User < ActiveRecord::Base
-    include OAuth2::Model::ResourceOwner
+    include Songkick::OAuth2::Model::ResourceOwner
     has_many :interesting_pieces_of_data
   end
 
   class Company < ActiveRecord::Base
-    include OAuth2::Model::ClientOwner
+    include Songkick::OAuth2::Model::ClientOwner
     belongs_to :user
   end
 
 To see the methods and associations that these two mixins add to your models,
-take a look at <b>lib/oauth2/model/client_owner.rb</b> and
-<b>lib/oauth2/model/resource_owner.rb</b>.
+take a look at <b>lib/songkick/oauth2/model/client_owner.rb</b> and
+<b>lib/songkick/oauth2/model/resource_owner.rb</b>.
 
 
 === Registering client applications
 
-Clients are modeled by the <tt>OAuth2::Model::Client</tt> class, which is an
-ActiveRecord model. You just need to implement a UI for creating them, for
+Clients are modeled by the <tt>Songkick::OAuth2::Model::Client</tt> class, which
+is an ActiveRecord model. You just need to implement a UI for creating them, for
 example in a Sinatra app:
 
   get '/oauth/apps/new' do
-    @client = OAuth2::Model::Client.new
+    @client = Songkick::OAuth2::Model::Client.new
     erb :new_client
   end
 
   post '/oauth/apps' do
-    @client = OAuth2::Model::Client.new(params)
+    @client = Songkick::OAuth2::Model::Client.new(params)
     @client.save ? erb(:show_client) : erb(:new_client)
   end
 
@@ -168,13 +169,13 @@ so you can only read it when you initially create the client object.
 This is a path that your application exposes in order for clients to communicate
 with your application. It is also the page that the client will send users to
 so they can authenticate and grant access. Many requests to this endpoint will
-be protocol-level requests that do not involve the user, and <tt>OAuth2::Provider</tt>
-gives you a generic way to handle all that.
+be protocol-level requests that do not involve the user, and
+<tt>Songkick::OAuth2::Provider</tt> gives you a generic way to handle all that.
 
 You should use this to get the right response, status code and headers to send
-to the client. In the event that <tt>OAuth2::Provider</tt> does not provide a
-response, you should render a page that lets the user begin to authenticate and
-grant access.
+to the client. In the event that <tt>Songkick::OAuth2::Provider</tt> does not
+provide a response, you should render a page that lets the user begin to
+authenticate and grant access.
 
 This endpoint must be accessible via GET and POST. In this example we will
 expose the OAuth service through the path <tt>/oauth/authorize</tt>. We check if
@@ -185,7 +186,7 @@ the client:
   [:get, :post].each do |method|
     __send__ method, '/oauth/authorize' do
       @owner  = User.find_by_id(session[:user_id])
-      @oauth2 = OAuth2::Provider.parse(@owner, env)
+      @oauth2 = Songkick::OAuth2::Provider.parse(@owner, env)
       
       if @oauth2.redirect?
         redirect @oauth2.redirect_uri, @oauth2.response_status
@@ -234,7 +235,7 @@ user checks a box before posting a form to indicate their intent:
 
   post '/oauth/allow' do
     @user = User.find_by_id(session[:user_id])
-    @auth = OAuth2::Provider::Authorization.new(@user, params)
+    @auth = Songkick::OAuth2::Provider::Authorization.new(@user, params)
     
     if params['allow'] == '1'
       @auth.grant_access!
@@ -245,7 +246,7 @@ user checks a box before posting a form to indicate their intent:
   end
 
 After granting or denying access, we just redirect back to the client using a
-URI that <tt>OAuth2::Provider</tt> will provide for you.
+URI that <tt>Songkick::OAuth2::Provider</tt> will provide for you.
 
 
 === Using password credentials
@@ -256,7 +257,7 @@ directly from the user and then post them to the exchange endpoint. On the
 provider side you can handle this using the <tt>handle_passwords</tt> and
 <tt>grant_access!</tt> API methods, for example:
 
-  OAuth2::Provider.handle_passwords do |client, username, password|
+  Songkick::OAuth2::Provider.handle_passwords do |client, username, password|
     user = User.find_by_username(username)
     if user.authenticate?(password)
       user.grant_access!(client)
@@ -283,13 +284,13 @@ would then pass this token to your OAuth endpoint and exchange it for an access
 token from your site. You will typically create an account in your database to
 represent this, then have that new account grant access to the client.
 
-To use assertions, you must tell <tt>OAuth2::Provider</tt> how to handle
-assertions based on their type. An assertion type must be a valid URI. For
-the Facebook example we'd do the following. The block yields the <tt>Client</tt>
-object making the exchange request, and the value of the assertion, which in
-this example will be a Facebook access token.
+To use assertions, you must tell <tt>Songkick::OAuth2::Provider</tt> how to
+handle assertions based on their type. An assertion type must be a valid URI.
+For the Facebook example we'd do the following. The block yields the
+<tt>Client</tt> object making the exchange request, and the value of the
+assertion, which in this example will be a Facebook access token.
 
-  OAuth2::Provider.handle_assertions 'https://graph.facebook.com/me' do |client, assertion|
+  Songkick::OAuth2::Provider.handle_assertions 'https://graph.facebook.com/me' do |client, assertion|
     facebook = URI.parse('https://graph.facebook.com/me?access_token=' + assertion)
     response = Net::HTTP.get_response(facebook)
     
@@ -300,8 +301,8 @@ this example will be a Facebook access token.
   end
 
 This code should run when your app boots, not during a request handler - think
-of it as configuration for <tt>OAuth2::Provider</tt>. The framework will invoke
-it when a client attempts to use assertions with your OAuth endpoint.
+of it as configuration for <tt>Songkick::OAuth2::Provider</tt>. The framework
+will invoke it when a client attempts to use assertions with your OAuth endpoint.
 
 The final call in your handler should be to <tt>grant_access!</tt>; this returns
 an <tt>Authorization</tt> object that the framework then uses to complete the
@@ -317,7 +318,7 @@ simple, for example a call to get a user's notes:
 
   get '/user/:username/notes' do
     user  = User.find_by_username(params[:username])
-    token = OAuth2::Provider.access_token(user, ['read_notes'], env)
+    token = Songkick::OAuth2::Provider.access_token(user, ['read_notes'], env)
     
     headers token.response_headers
     status  token.response_status
@@ -329,10 +330,10 @@ simple, for example a call to get a user's notes:
     end
   end
 
-<tt>OAuth2::Provider.access_token()</tt> takes a <tt>ResourceOwner</tt>, a list
-of scopes required to access the resource, and a request environment object. If
-the token was not granted for the required scopes, has expired or is simply
-invalid, headers and a status code are set to indicate this to the client.
+<tt>Songkick::OAuth2::Provider.access_token()</tt> takes a <tt>ResourceOwner</tt>,
+a list of scopes required to access the resource, and a request environment
+object. If the token was not granted for the required scopes, has expired or is
+simply invalid, headers and a status code are set to indicate this to the client.
 <tt>token.valid?</tt> is the call you should use to determine whether to serve
 the request or not.
 
@@ -341,7 +342,7 @@ about a user by supplying their access token. This can be done by passing
 <tt>nil</tt> as the resource owner:
 
   get '/me' do
-    token = OAuth2::Provider.access_token(nil, [], env)
+    token = Songkick::OAuth2::Provider.access_token(nil, [], env)
     if token.valid?
       JSON.unparse('username' => token.owner.username)
     else
