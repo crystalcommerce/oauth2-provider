@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OAuth2::Model::ResourceOwner do
+describe Songkick::OAuth2::Model::ResourceOwner do
   before do
     @owner  = Factory(:owner)
     @client = Factory(:client)
@@ -12,12 +12,12 @@ describe OAuth2::Model::ResourceOwner do
     end
     
     it "creates an authorization between the owner and the client" do
-      OAuth2::Model::Authorization.should_receive(:create).with(:client => @client)      
+      Songkick::OAuth2::Model::Authorization.should_receive(:create).with(:client => @client)      
       @owner.grant_access!(@client)
     end
     
     it "returns the authorization" do
-      @owner.grant_access!(@client).should be_kind_of(OAuth2::Model::Authorization)
+      @owner.grant_access!(@client).should be_kind_of(Songkick::OAuth2::Model::Authorization)
     end
   end
   
@@ -27,7 +27,7 @@ describe OAuth2::Model::ResourceOwner do
     end
     
     it "does not create a new one" do
-      OAuth2::Model::Authorization.should_not_receive(:create)
+      Songkick::OAuth2::Model::Authorization.should_not_receive(:create)
       @owner.grant_access!(@client)
     end
     
@@ -60,7 +60,7 @@ describe OAuth2::Model::ResourceOwner do
   it "destroys its authorizations on destroy" do
     Factory(:authorization, :owner => @owner, :client => @client)
     @owner.destroy
-    OAuth2::Model::Authorization.count.should be_zero
+    Songkick::OAuth2::Model::Authorization.count.should be_zero
   end
 end
 

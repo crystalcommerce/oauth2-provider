@@ -1,14 +1,14 @@
 require 'spec_helper'
 
-describe OAuth2::Provider::Exchange do
+describe Songkick::OAuth2::Provider::Exchange do
   before do
     @client = Factory(:client)
     @owner  = TestApp::User['Bob']
     @authorization = Factory(:authorization, :client => @client, :owner => @owner, :scope => 'foo bar')
-    OAuth2.stub(:random_string).and_return('random_string')
+    Songkick::OAuth2.stub(:random_string).and_return('random_string')
   end
   
-  let(:exchange) { OAuth2::Provider::Exchange.new(@owner, params) }
+  let(:exchange) { Songkick::OAuth2::Provider::Exchange.new(@owner, params) }
   
   shared_examples_for "validates required parameters" do
     describe "missing grant_type" do
@@ -85,7 +85,7 @@ describe OAuth2::Provider::Exchange do
   
   shared_examples_for "valid token request" do
     before do
-      OAuth2.stub(:random_string).and_return('random_access_token')
+      Songkick::OAuth2.stub(:random_string).and_return('random_access_token')
     end
     
     it "is valid" do
@@ -96,7 +96,7 @@ describe OAuth2::Provider::Exchange do
       exchange.update_authorization
       authorization.reload
       authorization.code.should be_nil
-      authorization.access_token_hash.should == OAuth2.hashify('random_access_token')
+      authorization.access_token_hash.should == Songkick::OAuth2.hashify('random_access_token')
       authorization.refresh_token.should be_nil
     end
   end
@@ -179,7 +179,7 @@ describe OAuth2::Provider::Exchange do
     let(:authorization) { @authorization }
     
     before do
-      OAuth2::Provider.handle_passwords do |client, username, password|
+      Songkick::OAuth2::Provider.handle_passwords do |client, username, password|
         user = TestApp::User[username]
         if password == 'soldier'
           user.grant_access!(client, :scopes => ['foo', 'bar'])
@@ -231,16 +231,16 @@ describe OAuth2::Provider::Exchange do
     let(:authorization) { @authorization }
     
     before do
-      OAuth2::Provider.filter_assertions { |client| @client == client }
+      Songkick::OAuth2::Provider.filter_assertions { |client| @client == client }
       
-      OAuth2::Provider.handle_assertions('https://graph.facebook.com/me') do |client, assertion|
+      Songkick::OAuth2::Provider.handle_assertions('https://graph.facebook.com/me') do |client, assertion|
         user = TestApp::User[assertion]
         user.grant_access!(client, :scopes => ['foo', 'bar'])
       end
     end
     
     after do
-      OAuth2::Provider.clear_assertion_handlers!
+      Songkick::OAuth2::Provider.clear_assertion_handlers!
     end
     
     it_should_behave_like "validates required parameters"

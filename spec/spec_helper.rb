@@ -14,7 +14,7 @@ require 'logger'
 ActiveRecord::Base.logger = Logger.new(STDERR)
 ActiveRecord::Base.logger.level = Logger::INFO
 
-OAuth2::Model::Schema.up
+Songkick::OAuth2::Model::Schema.up
 
 ActiveRecord::Schema.define do |version|
   create_table :users, :force => true do |t|
@@ -42,12 +42,12 @@ RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
 
   config.before do
-    OAuth2::Provider.enforce_ssl = false
+    Songkick::OAuth2::Provider.enforce_ssl = false
   end
   
   config.after do
-    [ OAuth2::Model::Client,
-      OAuth2::Model::Authorization,
+    [ Songkick::OAuth2::Model::Client,
+      Songkick::OAuth2::Model::Authorization,
       TestApp::User
       
     ].each { |k| k.delete_all }
@@ -55,7 +55,7 @@ RSpec.configure do |config|
 end
 
 def create_authorization(params)
-  OAuth2::Model::Authorization.create do |authorization|
+  Songkick::OAuth2::Model::Authorization.create do |authorization|
     params.each do |key, value|
       authorization.__send__ "#{key}=", value
     end
