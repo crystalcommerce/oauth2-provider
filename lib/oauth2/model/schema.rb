@@ -1,8 +1,8 @@
 module OAuth2
   module Model
     
-    class Schema < ActiveRecord::Migration
-      def self.up
+    class BaseSchema < ActiveRecord::Migration
+      def change
         create_table :oauth2_clients, :force => true do |t|
           t.timestamps
           t.string     :oauth2_client_owner_type
@@ -11,7 +11,6 @@ module OAuth2
           t.string     :client_id
           t.string     :client_secret_hash
           t.string     :redirect_uri
-          t.string     :client_type
         end
         add_index :oauth2_clients, :client_id
         
@@ -31,13 +30,25 @@ module OAuth2
         add_index :oauth2_authorizations, [:client_id, :access_token_hash]
         add_index :oauth2_authorizations, [:client_id, :refresh_token_hash]
       end
-      
-      def self.down
-        drop_table :oauth2_clients
-        drop_table :oauth2_authorizations
+    end
+
+    class ClientTypeMigration < ActiveRecord::Migration
+      def change
+        add_column :oauth2_clients, :client_type, :string,
+                   :default => 'web_application'
       end
     end
-    
+
+    class Schema
+      MIGRATIONS = [BaseSchema, ClientTypeMigration]
+
+      def self.up
+        MIGRATIONS.each(&:up)
+      end
+
+      def self.down
+        MIGRATIONS.each(&:down)
+      end
+    end
   end
 end
-
