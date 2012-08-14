@@ -51,5 +51,48 @@ describe OAuth2::Model::Client do
     @client.destroy
     OAuth2::Model::Authorization.count.should be_zero
   end
+
+  it "defaults the client type to web_application" do
+    @client.client_type.should == 'web_application'
+    @client.web_application?.should be_true
+  end
+
+  it "allows mass-assignment of client_type" do
+    @client.update_attributes(:client_type => 'native_application')
+    @client.client_type.should == 'native_application'
+  end
+
+  it "does not identify as a native_application" do
+    @client.native_application?.should be_false
+  end
+
+  context "native application" do
+    before do
+      @client.client_type = 'native_application'
+    end
+
+    it "changes the redirect uri to out of band" do
+      @client.save
+      @client.redirect_uri.should == 'urn:ietf:wg:oauth:2.0:oob'
+    end
+
+    it "is valid" do
+      @client.should be_valid
+    end
+
+    it "identifies as a native_application" do
+      @client.native_application?.should be_true
+    end
+  end
+
+  context "bogus client type" do
+    before do
+      @client.client_type = 'porkchop_sandwiches'
+    end
+
+    it "is not valid" do
+      @client.should_not be_valid
+    end
+  end
 end
 

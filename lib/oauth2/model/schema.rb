@@ -11,6 +11,7 @@ module OAuth2
           t.string     :client_id
           t.string     :client_secret_hash
           t.string     :redirect_uri
+          t.string     :client_type
         end
         add_index :oauth2_clients, :client_id
         
