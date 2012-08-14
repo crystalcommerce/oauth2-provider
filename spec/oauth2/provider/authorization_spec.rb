@@ -4,14 +4,14 @@ describe OAuth2::Provider::Authorization do
   let(:resource_owner) { TestApp::User['Bob'] }
   
   let(:authorization) { OAuth2::Provider::Authorization.new(resource_owner, params) }
+  let!(:client) { Factory(:client) }
   
   let(:params) { { 'response_type' => 'code',
-                   'client_id'     => @client.client_id,
-                   'redirect_uri'  => @client.redirect_uri }
+                   'client_id'     => client.client_id,
+                   'redirect_uri'  => client.redirect_uri }
                }
   
   before do
-    @client = Factory(:client)
     OAuth2.stub(:random_string).and_return('s1', 's2', 's3')
   end
   
@@ -34,7 +34,7 @@ describe OAuth2::Provider::Authorization do
     
     describe "when the owner has already authorized the client" do
       before do
-        create_authorization(:owner => resource_owner, :client => @client, :scope => 'foo bar')
+        create_authorization(:owner => resource_owner, :client => client, :scope => 'foo bar')
       end
       
       it "exposes the scope as a list of strings" do
@@ -124,7 +124,7 @@ describe OAuth2::Provider::Authorization do
     end
     
     describe "when the client has not registered a redirect_uri" do
-      before { @client.update_attribute(:redirect_uri, nil) }
+      before { client.update_attribute(:redirect_uri, nil) }
       
       it "is valid" do
         authorization.error.should be_nil
@@ -158,7 +158,7 @@ describe OAuth2::Provider::Authorization do
       before do
         @model = Factory(:authorization,
           :owner  => resource_owner,
-          :client => @client,
+          :client => client,
           :code   => nil)
       end
       
@@ -174,7 +174,7 @@ describe OAuth2::Provider::Authorization do
       before do
         @model = Factory(:authorization,
           :owner  => resource_owner,
-          :client => @client,
+          :client => client,
           :code   => nil,
           :scope  => 'foo bar')
         
@@ -192,7 +192,7 @@ describe OAuth2::Provider::Authorization do
       before do
         @model = Factory(:authorization,
           :owner      => resource_owner,
-          :client     => @client,
+          :client     => client,
           :expires_at => 2.months.ago,
           :code       => 'existing_code',
           :scope      => 'foo bar')
@@ -224,7 +224,49 @@ describe OAuth2::Provider::Authorization do
         @model.scopes.should == Set.new(%w[foo bar qux])
       end
     end
+
+    shared_examples_for "grant without redirect" do
+      it "does not redirect" do
+        authorization.grant_access!
+        authorization.should_not be_redirect
+      end
+    end
+
+    shared_examples_for "including a code cookie" do
+      it_should_behave_like "grant without redirect"
+
+      it "sets a cookie for code" do
+        authorization.grant_access!
+        authorization.response_headers['Set-Cookie'].should == 'code=s1'
+      end
+    end
+
+    shared_examples_for "including an access_token cookie" do
+      it_should_behave_like "grant without redirect"
+
+      it "sets a cookie for access token" do
+        authorization.grant_access!
+        authorization.response_headers['Set-Cookie'].should == 'access_token=s1'
+      end
+    end
     
+    shared_examples_for "including access_token and code cookies" do
+      it_should_behave_like "grant without redirect"
+
+      it "sets a cookie for access token" do
+        authorization.grant_access!
+        authorization.response_headers['Set-Cookie'].
+          should == 'code=s1&access_token=s2'
+      end
+    end
+
+    shared_examples_for "no cookies set" do
+      it "does not set a cookie" do
+        authorization.grant_access!
+        authorization.response_headers.should_not have_key('Set-Cookie')
+      end
+    end
+
     describe "for code requests" do
       before do
         params['response_type'] = 'code'
@@ -235,6 +277,7 @@ describe OAuth2::Provider::Authorization do
         authorization.grant_access!
         authorization.client.should_not be_nil
         authorization.should be_redirect
+        authorization.redirect_uri.should == 'https://client.example.com/cb?code=s1&scope=foo+bar'
       end
       
       it "creates a code for the authorization" do
@@ -249,9 +292,17 @@ describe OAuth2::Provider::Authorization do
         
         authorization = OAuth2::Model::Authorization.first
         authorization.owner.should == resource_owner
-        authorization.client.should == @client
+        authorization.client.should == client
         authorization.code.should == "s1"
         authorization.scopes.should == Set.new(%w[foo bar])
+      end
+
+      it_should_behave_like "no cookies set"
+
+      context "native application" do
+        let!(:client) { Factory(:native_client) }
+
+        it_should_behave_like "including a code cookie"
       end
     end
     
@@ -271,10 +322,25 @@ describe OAuth2::Provider::Authorization do
         
         authorization = OAuth2::Model::Authorization.first
         authorization.owner.should == resource_owner
-        authorization.client.should == @client
+        authorization.client.should == client
         authorization.code.should be_nil
         authorization.access_token_hash.should == OAuth2.hashify("s1")
         authorization.refresh_token_hash.should == OAuth2.hashify("s2")
+      end
+
+      it "makes the authorization redirect" do
+        authorization.grant_access!
+        authorization.client.should_not be_nil
+        authorization.should be_redirect
+        authorization.redirect_uri.should == 'https://client.example.com/cb#access_token=s1'
+      end
+
+      it_should_behave_like "no cookies set"
+
+      context "native application" do
+        let!(:client) { Factory(:native_client) }
+        
+        it_should_behave_like "including an access_token cookie"
       end
     end
     
@@ -294,10 +360,25 @@ describe OAuth2::Provider::Authorization do
         
         authorization = OAuth2::Model::Authorization.first
         authorization.owner.should == resource_owner
-        authorization.client.should == @client
+        authorization.client.should == client
         authorization.code.should == "s1"
         authorization.access_token_hash.should == OAuth2.hashify("s2")
         authorization.refresh_token_hash.should == OAuth2.hashify("s3")
+      end
+
+      it "makes the authorization redirect" do
+        authorization.grant_access!
+        authorization.client.should_not be_nil
+        authorization.should be_redirect
+        authorization.redirect_uri.should == 'https://client.example.com/cb?code=s1#access_token=s2'
+      end
+
+      it_should_behave_like "no cookies set"
+
+      context "native application" do
+        let!(:client) { Factory(:native_client) }
+
+        it_should_behave_like "including access_token and code cookies"
       end
     end
   end
@@ -325,8 +406,8 @@ describe OAuth2::Provider::Authorization do
     it "only exposes OAuth-related parameters" do
       authorization.params.should == {
         'response_type' => 'code',
-        'client_id'     => @client.client_id,
-        'redirect_uri'  => @client.redirect_uri,
+        'client_id'     => client.client_id,
+        'redirect_uri'  => client.redirect_uri,
         'state'         => 'valid',
         'scope'         => 'valid'
       }
@@ -336,8 +417,8 @@ describe OAuth2::Provider::Authorization do
       params.delete('scope')
       authorization.params.should == {
         'response_type' => 'code',
-        'client_id'     => @client.client_id,
-        'redirect_uri'  => @client.redirect_uri,
+        'client_id'     => client.client_id,
+        'redirect_uri'  => client.redirect_uri,
         'state'         => 'valid'
       }
     end

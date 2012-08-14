@@ -19,6 +19,11 @@ Factory.define :client, :class => OAuth2::Model::Client do |c|
   c.redirect_uri  'https://client.example.com/cb'
 end
 
+Factory.define :native_client, :class => OAuth2::Model::Client, :parent => :client do |c|
+  c.redirect_uri 'urn:ietf:wg:oauth:2.0:oob'
+  c.client_type  'native_application'
+end
+
 Factory.define :authorization, :class => OAuth2::Model::Authorization do |ac|
   ac.client     Factory(:client)
   ac.code       { OAuth2.random_string }

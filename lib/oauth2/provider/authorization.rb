@@ -80,7 +80,7 @@ module OAuth2
       end
       
       def redirect?
-        @client and (@authorized or not valid?)
+        @client and !@client.native_application? and (@authorized or not valid?)
       end
       
       def redirect_uri
@@ -96,7 +96,7 @@ module OAuth2
           fragment = to_query_string(ACCESS_TOKEN, EXPIRES_IN, SCOPE)
           "#{ base_redirect_uri }#{ query.empty? ? '' : '?' + query }##{ fragment }"
         
-        elsif @params[RESPONSE_TYPE] == 'token'
+        elsif @params[RESPONSE_TYPE] == TOKEN
           fragment = to_query_string(ACCESS_TOKEN, EXPIRES_IN, SCOPE, STATE)
           "#{ base_redirect_uri }##{ fragment }"
         
@@ -115,7 +115,22 @@ module OAuth2
       end
       
       def response_headers
-        valid? ? {} : Exchange::RESPONSE_HEADERS
+        if valid?
+          if @client.native_application?
+            cookie = case @params[RESPONSE_TYPE]
+                     when CODE_AND_TOKEN then to_query_string(CODE, ACCESS_TOKEN)
+                     when CODE           then to_query_string(CODE)
+                     when TOKEN          then to_query_string(ACCESS_TOKEN)
+                     end
+            {
+              'Set-Cookie' => cookie
+            }
+          else
+            {}
+          end
+        else
+          Exchange::RESPONSE_HEADERS
+        end
       end
       
       def response_status

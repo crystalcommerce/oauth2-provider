@@ -99,6 +99,20 @@ describe OAuth2::Provider::Exchange do
       authorization.access_token_hash.should == OAuth2.hashify('random_access_token')
       authorization.refresh_token.should be_nil
     end
+
+    it "has required response headers"  do
+      exchange.response_headers.should == {
+        'Cache-Control' => 'no-store',
+        'Content-Type' => 'application/json'
+      }
+    end
+
+    it "includes the response body" do
+      JSON.parse(exchange.response_body).should == {
+        'access_token' => 'random_access_token',
+        'scope' => 'foo bar'
+      }
+    end
   end
   
   describe "using authorization_code grant type" do
@@ -165,6 +179,10 @@ describe OAuth2::Provider::Exchange do
         exchange.error.should == "invalid_grant"
         exchange.error_description.should == "The access grant you supplied is invalid"
       end
+    end
+
+    describe "native application" do
+      before { @client = Factory(:native_client) }
     end
   end
   
