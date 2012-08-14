@@ -237,7 +237,7 @@ describe OAuth2::Provider::Authorization do
 
       it "sets a cookie for code" do
         authorization.grant_access!
-        authorization.response_headers['Set-Cookie'].should == 'code=s1'
+        authorization.response_headers['Set-Cookie'].should == 'code=s1; path='
       end
     end
 
@@ -246,7 +246,7 @@ describe OAuth2::Provider::Authorization do
 
       it "sets a cookie for access token" do
         authorization.grant_access!
-        authorization.response_headers['Set-Cookie'].should == 'access_token=s1'
+        authorization.response_headers['Set-Cookie'].should == 'access_token=s1; path='
       end
     end
     
@@ -256,7 +256,7 @@ describe OAuth2::Provider::Authorization do
       it "sets a cookie for access token" do
         authorization.grant_access!
         authorization.response_headers['Set-Cookie'].
-          should == 'code=s1&access_token=s2'
+          should == "code=s1; path=\naccess_token=s2; path="
       end
     end
 

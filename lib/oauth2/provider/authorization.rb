@@ -117,13 +117,17 @@ module OAuth2
       def response_headers
         if valid?
           if @client.native_application?
-            cookie = case @params[RESPONSE_TYPE]
-                     when CODE_AND_TOKEN then to_query_string(CODE, ACCESS_TOKEN)
-                     when CODE           then to_query_string(CODE)
-                     when TOKEN          then to_query_string(ACCESS_TOKEN)
+            cookies = case @params[RESPONSE_TYPE]
+                      when CODE_AND_TOKEN
+                        [CGI::Cookie.new(CODE, @code),
+                         CGI::Cookie.new(ACCESS_TOKEN, @access_token)]
+                      when CODE
+                        [CGI::Cookie.new(CODE, @code)]
+                      when TOKEN
+                        [CGI::Cookie.new(ACCESS_TOKEN, @access_token)]
                      end
             {
-              'Set-Cookie' => cookie
+              'Set-Cookie' => cookies.map(&:to_s).join("\n")
             }
           else
             {}
