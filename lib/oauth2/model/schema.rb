@@ -36,8 +36,10 @@ module OAuth2
 
     class ClientTypeMigration < ActiveRecord::Migration
       def change
-        add_column :oauth2_clients, :client_type, :string,
-                   :default => 'web_application'
+        unless column_exists?(:oauth2_clients, :client_type)
+          add_column :oauth2_clients, :client_type, :string,
+                     :default => 'web_application'
+        end
       end
     end
 
