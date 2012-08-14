@@ -47,7 +47,7 @@ module OAuth2
       end
 
       def self.down
-        MIGRATIONS.each {|m| m.migrate(:down)}
+        MIGRATIONS.reverse.each {|m| m.migrate(:down)}
       end
     end
   end
