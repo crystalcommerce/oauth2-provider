@@ -43,11 +43,11 @@ module OAuth2
       MIGRATIONS = [BaseSchema, ClientTypeMigration]
 
       def self.up
-        MIGRATIONS.each(&:up)
+        MIGRATIONS.each {|m| m.migrate(:up)}
       end
 
       def self.down
-        MIGRATIONS.each(&:down)
+        MIGRATIONS.each {|m| m.migrate(:down)}
       end
     end
   end
