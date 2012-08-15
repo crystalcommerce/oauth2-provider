@@ -32,6 +32,10 @@ module OAuth2
       def redirect?
         false
       end
+
+      def cookies
+        {}
+      end
       
       def response_body
         return jsonize(ERROR, ERROR_DESCRIPTION) unless valid?

@@ -33,7 +33,7 @@ module OAuth2
         if @params[RESPONSE_TYPE] =~ /code/
           @code = @model.generate_code
         end
-        
+
         if @params[RESPONSE_TYPE] =~ /token/
           @access_token = @model.generate_access_token
         end
@@ -115,26 +115,24 @@ module OAuth2
       end
       
       def response_headers
-        if valid?
-          if @client.native_application?
-            cookies = case @params[RESPONSE_TYPE]
-                      when CODE_AND_TOKEN
-                        [CGI::Cookie.new(CODE, @code),
-                         CGI::Cookie.new(ACCESS_TOKEN, @access_token)]
-                      when CODE
-                        [CGI::Cookie.new(CODE, @code)]
-                      when TOKEN
-                        [CGI::Cookie.new(ACCESS_TOKEN, @access_token)]
-                     end
-            {
-              'Set-Cookie' => cookies.map(&:to_s).join("\n")
-            }
-          else
-            {}
+        valid? ? {} : Exchange::RESPONSE_HEADERS
+      end
+
+      def cookies
+        cookies_hash = {}
+        if valid? && @client.native_application?
+          case @params[RESPONSE_TYPE]
+          when CODE_AND_TOKEN
+            cookies_hash[CODE]         = {:value => @code}
+            cookies_hash[ACCESS_TOKEN] = {:value => @access_token}
+          when CODE
+            cookies_hash[CODE] = {:value => @code}
+          when TOKEN
+            cookies_hash[ACCESS_TOKEN] = {:value => @access_token}
           end
-        else
-          Exchange::RESPONSE_HEADERS
         end
+
+        cookies_hash
       end
       
       def response_status

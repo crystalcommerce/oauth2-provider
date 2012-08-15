@@ -235,35 +235,42 @@ describe OAuth2::Provider::Authorization do
     shared_examples_for "including a code cookie" do
       it_should_behave_like "grant without redirect"
 
-      it "sets a cookie for code" do
+      it "returns a cookie for code" do
         authorization.grant_access!
-        authorization.response_headers['Set-Cookie'].should == 'code=s1; path='
+        authorization.cookies.should == {
+          'code' => {:value => 's1'}
+        }
       end
     end
 
     shared_examples_for "including an access_token cookie" do
       it_should_behave_like "grant without redirect"
 
-      it "sets a cookie for access token" do
+      it "returns a cookie for access token" do
         authorization.grant_access!
-        authorization.response_headers['Set-Cookie'].should == 'access_token=s1; path='
+        authorization.cookies.should == {
+          'access_token' => {:value => 's1'}
+        }
       end
     end
     
     shared_examples_for "including access_token and code cookies" do
       it_should_behave_like "grant without redirect"
 
-      it "sets a cookie for access token" do
+      it "returns a cookie for access token" do
         authorization.grant_access!
-        authorization.response_headers['Set-Cookie'].
-          should == "code=s1; path=\naccess_token=s2; path="
+
+        authorization.cookies.should == {
+          'code'         => {:value => 's1'},
+          'access_token' => {:value => 's2'}
+        }
       end
     end
 
     shared_examples_for "no cookies set" do
       it "does not set a cookie" do
         authorization.grant_access!
-        authorization.response_headers.should_not have_key('Set-Cookie')
+        authorization.cookies.should == {}
       end
     end
 
