@@ -107,6 +107,11 @@ using <tt>OAuth2::Model::Schema.up</tt>, which can be used inside an
     end
   end
 
+==== Special Note on Migrations
+
+This fork adds a field to oauth2_clients. You should create another migration
+that looks like the one above. It will automatically add the required column
+without data loss.
 
 === Model Mixins
 
@@ -241,6 +246,11 @@ user checks a box before posting a form to indicate their intent:
     else
       @auth.deny_access!
     end
+
+    @auth.cookies.each do |name, value_hash|
+      response.set_cookie(name, value_hash)
+    end
+
     redirect @auth.redirect_uri, @auth.response_status
   end
 
