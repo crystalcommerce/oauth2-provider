@@ -1,6 +1,5 @@
 module OAuth2
   module Model
-    
     module AuthorizationAssociation
       def find_or_create_for_client(client)
         unless client.is_a?(Client)
@@ -28,7 +27,7 @@ module OAuth2
                        :dependent => :destroy,
                        :extend => AuthorizationAssociation
       end
-      
+
       def grant_access!(client, options = {})
         authorization = oauth2_authorizations.find_or_create_for_client(client)
 
@@ -36,10 +35,13 @@ module OAuth2
           scopes = authorization.scopes + scopes
           authorization.update_attribute(:scope, scopes.entries.join(' '))
         end
-        
+
         authorization
       end
+
+      def authorizes_owner?(owner)
+        self == owner
+      end
     end
-    
   end
 end
