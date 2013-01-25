@@ -54,7 +54,7 @@ module OAuth2
         return self.error = EXPIRED_TOKEN      if authorization.expired?
         return self.error = INSUFFICIENT_SCOPE unless authorization.in_scope?(scopes)
 
-        if resource_owner && !authorization.owner.authorizes_owner?(resource_owner)
+        unless authorization.owner.authorizes?(resource_owner)
           self.error = INSUFFICIENT_SCOPE
         end
       end

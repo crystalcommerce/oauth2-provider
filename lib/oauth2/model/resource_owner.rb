@@ -39,8 +39,8 @@ module OAuth2
         authorization
       end
 
-      def authorizes_owner?(owner)
-        self == owner
+      def authorizes?(owner)
+        owner.nil? || self == owner
       end
     end
   end
