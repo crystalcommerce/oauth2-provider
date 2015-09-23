@@ -13,11 +13,11 @@ spec = Gem::Specification.new do |s|
   s.require_paths     = ["lib"]
 
   s.add_dependency("activerecord")
-  s.add_dependency("bcrypt-ruby")
+  s.add_dependency("bcrypt")
   s.add_dependency("json")
   s.add_dependency("rack")
 
-  s.add_development_dependency("activerecord", "~> 3.2.0") # The SQLite adapter in 3.1 is broken
+  #s.add_development_dependency("activerecord", "~> 3.2.0") # The SQLite adapter in 3.1 is broken
   s.add_development_dependency("rspec")
   s.add_development_dependency("sqlite3")
   s.add_development_dependency("sinatra", ">= 1.3.0")
