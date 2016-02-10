@@ -12,7 +12,7 @@ spec = Gem::Specification.new do |s|
   s.files             = %w(README.rdoc) + Dir.glob("{spec,lib,example}/**/*")
   s.require_paths     = ["lib"]
 
-  s.add_runtime_dependency("activerecord")
+  s.add_runtime_dependency 'activerecord', '~> 3.2.0'
   s.add_runtime_dependency("bcrypt-ruby")
   s.add_runtime_dependency("json")
   s.add_runtime_dependency("rack")
